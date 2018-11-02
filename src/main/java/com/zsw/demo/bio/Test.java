@@ -1,6 +1,6 @@
-package com.zsw.demo;
+package com.zsw.demo.bio;
 
-import com.zsw.demo.ui.JframeForm;
+import com.zsw.demo.bio.ui.JframeForm;
 
 /**
  * @author Shaowei Zhang on 2018/11/1 22:45

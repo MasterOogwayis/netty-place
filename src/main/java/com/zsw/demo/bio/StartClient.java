@@ -1,6 +1,6 @@
-package com.zsw.demo;
+package com.zsw.demo.bio;
 
-import com.zsw.demo.client.Client;
+import com.zsw.demo.bio.client.Client;
 
 /**
  * @author Administrator on 2018/11/1 22:02

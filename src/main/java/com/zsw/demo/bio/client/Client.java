@@ -1,11 +1,10 @@
-package com.zsw.demo.client;
+package com.zsw.demo.bio.client;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.Scanner;
 
 /**
  * @author Administrator on 2018/11/1 22:02
