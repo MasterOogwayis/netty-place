@@ -26,7 +26,7 @@ public class ClientHandler implements Runnable {
                 ) {
             String message;
             while ((message = reader.readLine()) != null) {
-                log.info("收到服务器消息：{}", message);
+                log.info("消息：{}", message);
             }
         } catch (IOException e) {
             e.printStackTrace();
