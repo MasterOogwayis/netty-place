@@ -18,75 +18,68 @@ import java.util.Random;
 import java.util.Set;
 
 /**
- * @author Shaowei Zhang on 2018/11/4 23:54
+ * @author Shaowei Zhang on 2018/11/5 21:08
  **/
 @Slf4j
 @AllArgsConstructor
-public class ClientSocketChannelHandle implements Runnable {
+public class ClientSocketChannelHandler implements Runnable {
 
     private String name;
 
     private SocketAddress address;
 
-    private static Charset utf8 = Charset.forName("utf8");
+    private static Charset utf8 = Charset.forName("utf-8");
 
     private static Random rn = new Random();
 
     @Override
     public void run() {
-        Selector selector = null;
+        Selector selector;
+
         try {
             SocketChannel sc = SocketChannel.open();
             sc.configureBlocking(false);
 
             selector = Selector.open();
 
-            // Buffers 分配的堆外内存，触发感兴趣事件后读写数据
-            sc.register(selector, SelectionKey.OP_WRITE | SelectionKey.OP_READ, new Buffers(1024, 1024));
+            sc.register(selector, SelectionKey.OP_WRITE | SelectionKey.OP_READ, new Buffers(512, 512));
 
             sc.connect(this.address);
 
-            // TCP 3次握手
             while (!sc.finishConnect()) {
                 ;
             }
-
-            log.info("{} 已连接", this.name);
+            log.info("{} 已连接到服务端", this.name);
         } catch (IOException e) {
-//            e.printStackTrace();
-            log.error("连接服务端失败:{}", e.getMessage());
+            log.error("{} 客户端连接失败", this.name);
             return;
         }
 
+
         try {
-            int i = 1;
             while (!Thread.currentThread().isInterrupted()) {
                 selector.select();
 
-                Set<SelectionKey> selectionKeys = selector.selectedKeys();
-                Iterator<SelectionKey> it = selectionKeys.iterator();
+                Set<SelectionKey> keys = selector.selectedKeys();
+                Iterator<SelectionKey> it = keys.iterator();
 
+                int i = 1;
                 while (it.hasNext()) {
                     SelectionKey key = it.next();
-                    it.remove();
 
                     Buffers buffers = (Buffers) key.attachment();
-
                     ByteBuffer readBuffer = buffers.getReadBuffer();
                     ByteBuffer writeBuffer = buffers.getWriteBuffer();
 
                     SocketChannel sc = (SocketChannel) key.channel();
 
-                    // 可读状态
                     if (key.isReadable()) {
                         sc.read(readBuffer);
                         readBuffer.flip();
 
                         CharBuffer charBuffer = utf8.decode(readBuffer);
 
-                        char[] chars = Arrays.copyOf(charBuffer.array(), readBuffer.position());
-
-                        log.info(Arrays.toString(chars));
+                        log.info(Arrays.toString(charBuffer.array()));
 
                         readBuffer.clear();
                     }
@@ -96,29 +89,27 @@ public class ClientSocketChannelHandle implements Runnable {
                         writeBuffer.put((this.name + " " + i).getBytes());
                         writeBuffer.flip();
 
-                        sc.write(writeBuffer);
+                        while (writeBuffer.hasRemaining()) {
+                            sc.write(writeBuffer);
+                        }
+
                         writeBuffer.clear();
-                        i++;
+                        i ++;
                     }
                 }
                 Thread.sleep(1000 + rn.nextInt(1000));
             }
-
-
         } catch (IOException e) {
-//            e.printStackTrace();
-            log.error("{} 连接出错:{}", this.name, e.getMessage());
+            log.error("{} 遇到连接错误: {}", this.name, e.getMessage());
         } catch (InterruptedException e) {
-//            e.printStackTrace();
-            log.error("{} 连接已中断:{}", this.name, e.getMessage());
+            log.error("{} 客户端已被终止:{}", this.name, e.getMessage());
         } finally {
             try {
                 selector.close();
             } catch (IOException e) {
-//                e.printStackTrace();
-                log.error("{} 关闭 selector 失败:{}", this.name, e.getMessage());
+                log.error("{} 关闭 selector 出错", this.name);
             }
-            log.info("{} selector 已关闭", this.name);
+            log.info("{} 客户端已停止", this.name);
         }
 
 

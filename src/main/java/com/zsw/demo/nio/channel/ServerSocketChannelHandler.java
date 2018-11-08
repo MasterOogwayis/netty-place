@@ -8,7 +8,10 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.channels.*;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -16,14 +19,14 @@ import java.util.Random;
 import java.util.Set;
 
 /**
- * @author Shaowei Zhang on 2018/11/5 0:10
+ * @author Shaowei Zhang on 2018/11/5 21:23
  **/
 @Slf4j
 public class ServerSocketChannelHandler implements Runnable {
 
     private SocketAddress address;
 
-    private static Charset utf8 = Charset.forName("utf8");
+    private static Charset utf8 = Charset.forName("utf-8");
 
     private static Random rn = new Random();
 
@@ -33,22 +36,23 @@ public class ServerSocketChannelHandler implements Runnable {
 
     @Override
     public void run() {
-        ServerSocketChannel ssc = null;
-        Selector selector = null;
+        Selector selector;
+        ServerSocketChannel ssc;
 
         try {
-            selector = Selector.open();
-
             ssc = ServerSocketChannel.open();
             ssc.configureBlocking(false);
             ssc.bind(this.address, 100);
 
-            ssc.register(selector, SelectionKey.OP_ACCEPT, new Buffers(1024, 1024));
+            selector = Selector.open();
+
+            ssc.register(selector, SelectionKey.OP_ACCEPT);
+
+            log.info("服务器已启动：{}", this.address);
         } catch (IOException e) {
-//            e.printStackTrace();
-            log.error("服务器启动失败，{}", e.getMessage());
+            log.error("服务器启动失败");
+            return;
         }
-        log.info("服务器已启动：{}", this.address);
 
         try {
             while (!Thread.currentThread().isInterrupted()) {
@@ -59,7 +63,7 @@ public class ServerSocketChannelHandler implements Runnable {
                 Set<SelectionKey> keys = selector.selectedKeys();
                 Iterator<SelectionKey> it = keys.iterator();
 
-                SelectionKey key = null;
+                SelectionKey key;
                 while (it.hasNext()) {
                     key = it.next();
                     it.remove();
@@ -70,9 +74,9 @@ public class ServerSocketChannelHandler implements Runnable {
                             SocketChannel sc = ssc.accept();
                             sc.configureBlocking(false);
 
-                            sc.register(selector, SelectionKey.OP_READ, new Buffers(256, 256));
+                            sc.register(selector, SelectionKey.OP_READ, new Buffers(512, 512));
 
-                            log.info("接收到连接：{}", sc.getRemoteAddress());
+                            log.info("一个客户端连接了：{}", sc.getRemoteAddress());
                         }
 
                         if (key.isReadable()) {
@@ -90,62 +94,58 @@ public class ServerSocketChannelHandler implements Runnable {
 
                             readBuffer.rewind();
 
-                            writeBuffer.put("Echo from server:".getBytes());
+                            writeBuffer.put("Echo from server: ".getBytes());
                             writeBuffer.put(readBuffer);
 
                             readBuffer.clear();
 
-                            // 设置通道写事件， 触发下面过程
+                            // 设置 通道写事件
                             key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
                         }
 
+
                         if (key.isWritable()) {
+                            SocketChannel sc = (SocketChannel) key.channel();
+
                             Buffers buffers = (Buffers) key.attachment();
-                            // 需要些的内容通过 读事件已经保存
                             ByteBuffer writeBuffer = buffers.getWriteBuffer();
                             writeBuffer.flip();
-
-                            SocketChannel sc = (SocketChannel) key.channel();
 
                             int len = 0;
                             while (writeBuffer.hasRemaining()) {
                                 len = sc.write(writeBuffer);
                                 if (len == 0) {
-                                    // 写完了
                                     break;
                                 }
                             }
                             writeBuffer.compact();
 
-                            // 数据全部写入底层的Socket缓冲区了
+                            // 已经写完 取消写事件
                             if (len != 0) {
                                 key.interestOps(key.interestOps() & (~SelectionKey.OP_WRITE));
                             }
                         }
                     } catch (IOException e) {
-//                        e.printStackTrace();
-                        log.error("客户端连接错误:{}", e.getMessage());
-                       key.cancel();
-                       key.channel().close();
+                        log.error("客户端已中断");
+                        key.cancel();
+                        key.channel().close();
                     }
                 }
                 Thread.sleep(rn.nextInt(500));
             }
         } catch (IOException e) {
-//            e.printStackTrace();
-            log.error("ServerThread selector error:{}", e.getMessage());
+            log.error("服务器 selector 出错:{}", e.getMessage());
         } catch (InterruptedException e) {
-//            e.printStackTrace();
-            log.error("服务端已被终止:{}", e.getMessage());
+            log.error("服务器已被停止:{}", e.getMessage());
         } finally {
             try {
                 selector.close();
             } catch (IOException e) {
-//                e.printStackTrace();
-                log.error("服务端 selector 关闭出错:{}", e.getMessage());
+                log.error("服务器关闭 selector 失败:{}", e.getMessage());
             }
-            log.info("服务端 selector 已关闭");
+            log.info("服务器已关闭 selector");
         }
+
 
 
     }
