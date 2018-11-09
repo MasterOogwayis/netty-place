@@ -12,56 +12,52 @@ import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * @author Shaowei Zhang on 2018/11/8 17:15
+ * @author Shaowei Zhang on 2018/11/9 22:21
  **/
 @Slf4j
 public class NettyServer {
 
-    public static final int BOSS_THREAD_SIZE = Runtime.getRuntime().availableProcessors() * 2;
+    /**
+     * BOSS 线程池大小为核心数 * 2
+     */
+    private static final int BOSS_THREAD_SIZE = Runtime.getRuntime().availableProcessors() * 2;
 
-    public static final int WORK_THREAD_SIZE = 100;
-
-    public static final EventLoopGroup bossGroup = new NioEventLoopGroup(BOSS_THREAD_SIZE);
-
-    public static final EventLoopGroup workGroup = new NioEventLoopGroup(WORK_THREAD_SIZE);
+    private static final int WORK_THREAD_SIZE = 100;
 
 
-    public static void start() throws Exception {
-        ServerBootstrap serverBootstrap = new ServerBootstrap();
+
+    public static void start() {
+        EventLoopGroup bossGroup = new NioEventLoopGroup(BOSS_THREAD_SIZE);
+        EventLoopGroup workGroup = new NioEventLoopGroup(WORK_THREAD_SIZE);
+
         try {
+            ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.group(bossGroup, workGroup)
                     .channel(NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<Channel>() {
                         @Override
-                        protected void initChannel(Channel channel) throws Exception {
-                            ChannelPipeline pipeline = channel.pipeline();
+                        protected void initChannel(Channel ch) throws Exception {
+                            ChannelPipeline pipeline = ch.pipeline();
                             pipeline.addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4))
                                     .addLast(new LengthFieldPrepender(4))
                                     .addLast(new StringEncoder(CharsetUtil.UTF_8))
                                     .addLast(new StringDecoder(CharsetUtil.UTF_8))
-                                    .addLast(new TcpServerHandle());
+                                    .addLast(new TcpServerHandler());
                         }
                     });
-
-            ChannelFuture channelFuture = serverBootstrap.bind("127.0.0.1", 8080).sync();
+            ChannelFuture channelFuture = serverBootstrap.bind(8080).sync();
             channelFuture.channel().closeFuture().sync();
-
-            log.info("server started");
         } catch (Exception e) {
-            log.error("server error : {}", e);
+            log.error("server has got an error : {}", e.getMessage());
+        } finally {
+            bossGroup.shutdownGracefully();
+            workGroup.shutdownGracefully();
         }
     }
 
-    protected static void shutdown(){
-        workGroup.shutdownGracefully();
-        bossGroup.shutdownGracefully();
-    }
 
-
-
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         start();
-//        shutdown();
     }
 
 
