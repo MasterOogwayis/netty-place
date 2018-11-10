@@ -11,22 +11,23 @@ import io.netty.handler.codec.string.StringEncoder;
 import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 /**
- * @author Shaowei Zhang on 2018/11/9 22:21
+ * @author Shaowei Zhang on 2018/11/10 12:37
  **/
 @Slf4j
 public class NettyServer {
 
-    /**
-     * BOSS 线程池大小为核心数 * 2
-     */
     private static final int BOSS_THREAD_SIZE = Runtime.getRuntime().availableProcessors() * 2;
 
     private static final int WORK_THREAD_SIZE = 100;
 
 
-
-    public static void start() {
+    public static void start() throws Exception {
+//        Executor executor = Executors.newFixedThreadPool(100);
         EventLoopGroup bossGroup = new NioEventLoopGroup(BOSS_THREAD_SIZE);
         EventLoopGroup workGroup = new NioEventLoopGroup(WORK_THREAD_SIZE);
 
@@ -47,18 +48,17 @@ public class NettyServer {
                     });
             ChannelFuture channelFuture = serverBootstrap.bind(8080).sync();
             channelFuture.channel().closeFuture().sync();
-        } catch (Exception e) {
-            log.error("server has got an error : {}", e.getMessage());
+
+        } catch (InterruptedException e) {
+            log.error("Server has got an error : {}", e.getMessage());
         } finally {
             bossGroup.shutdownGracefully();
             workGroup.shutdownGracefully();
         }
     }
 
-
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         start();
     }
-
 
 }

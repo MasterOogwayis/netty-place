@@ -13,7 +13,7 @@ import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * @author Shaowei Zhang on 2018/11/9 22:31
+ * @author Shaowei Zhang on 2018/11/10 12:45
  **/
 @Slf4j
 public class NettyClient implements Runnable {
@@ -29,33 +29,34 @@ public class NettyClient implements Runnable {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
                             ChannelPipeline pipeline = ch.pipeline();
-                            pipeline.addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4))
-                                    .addLast(new LengthFieldPrepender(4))
-                                    .addLast(new StringEncoder(CharsetUtil.UTF_8))
-                                    .addLast(new StringDecoder(CharsetUtil.UTF_8))
-                                    .addLast(new MyClient());
+                            pipeline.addLast("frameDecoder", new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4))
+                                    .addLast("frameEncoder", new LengthFieldPrepender(4))
+                                    .addLast("encoder", new StringEncoder(CharsetUtil.UTF_8))
+                                    .addLast("decoder", new StringDecoder(CharsetUtil.UTF_8))
+                                    .addLast("handler", new MyClientHandler());
                         }
                     });
+
             for (int i = 0; i < 10; i++) {
                 ChannelFuture channelFuture = bootstrap.connect("127.0.0.1", 8080).sync();
-                channelFuture.channel().writeAndFlush("Hello Server , this is " + Thread.currentThread().getName() + " speaking ---> " + i);
+                channelFuture.channel().writeAndFlush("Hello Server, this is " + Thread.currentThread().getName() + " speaking ---> " + i);
                 channelFuture.channel().closeFuture().sync();
             }
-
-
-        } catch (InterruptedException e) {
-            log.error("client has got an error : {}", e.getMessage());
+            
+            
+        } catch (Exception e) {
+            log.error("Client error : {}", e.getMessage());
         } finally {
             group.shutdownGracefully();
         }
     }
 
-    public static void main(String[] args) {
 
+    public static void main(String[] args) {
         for (int i = 0; i < 3; i++) {
             new Thread(new NettyClient(), "Thread " + i).start();
-        }
 
+        }
     }
 
 }
