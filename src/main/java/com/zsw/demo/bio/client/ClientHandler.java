@@ -13,7 +13,7 @@ import java.net.Socket;
  **/
 @Slf4j
 @AllArgsConstructor
-public class ClientHandler implements Runnable {
+class ClientHandler implements Runnable {
 
     // 保存获取到的连接
     private Socket socket;

@@ -16,7 +16,7 @@ import java.util.function.Consumer;
  **/
 @Slf4j
 @AllArgsConstructor
-public class ServerHandler implements Runnable {
+class ServerHandler implements Runnable {
 
     // 保存连接信息
     private Socket socket;
