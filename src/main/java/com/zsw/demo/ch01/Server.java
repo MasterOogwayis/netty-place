@@ -10,7 +10,7 @@ import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * @author Shaowei Zhang on 2018/11/14 0:05
+ * @author Shaowei Zhang on 2018/11/14 19:44
  **/
 @Slf4j
 public class Server {
@@ -18,17 +18,17 @@ public class Server {
     public static void main(String[] args) {
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workGroup = new NioEventLoopGroup();
-
         try {
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.group(bossGroup, workGroup)
                     .channel(NioServerSocketChannel.class)
                     .handler(new LoggingHandler(LogLevel.DEBUG))
                     .childHandler(new ServerInitializer());
-            ChannelFuture channelFuture = serverBootstrap.bind(8080);
+
+            ChannelFuture channelFuture = serverBootstrap.bind(8080).sync();
             log.info("Server started.");
             channelFuture.channel().closeFuture().sync();
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             log.error("Server error : {}", e);
         } finally {
             bossGroup.shutdownGracefully();

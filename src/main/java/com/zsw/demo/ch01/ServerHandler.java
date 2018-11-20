@@ -7,7 +7,7 @@ import java.net.InetAddress;
 import java.util.Date;
 
 /**
- * @author Shaowei Zhang on 2018/11/14 0:11
+ * @author Shaowei Zhang on 2018/11/14 19:49
  **/
 @Slf4j
 @ChannelHandler.Sharable
@@ -25,21 +25,17 @@ public class ServerHandler extends SimpleChannelInboundHandler<String> {
     protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
         String response;
         boolean close = false;
-
         if (msg.isEmpty()) {
             response = "Please type something. \r\n";
+        } else if ("bye".equalsIgnoreCase(msg)) {
+            response = "Have a good day. \r\n";
+            close = true;
         } else {
-            if ("bye".equalsIgnoreCase(msg)) {
-                response = "Have a good day. \r\n";
-                close = true;
-            } else {
-                response = "Server has received you message '" + msg + "'. \r\n";
-            }
+            response = "Server has received you message " + msg + "''. \r\n";
         }
-        ChannelFuture channelFuture = ctx.write(response);
-
+        ChannelFuture channelFuture = ctx.writeAndFlush(response);
         if (close) {
-            log.info("A client has logout, {}", ctx.channel().remoteAddress());
+            log.info("A client logout. {}", channelFuture.channel().remoteAddress());
             channelFuture.addListener(ChannelFutureListener.CLOSE);
         }
 

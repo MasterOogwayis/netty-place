@@ -10,7 +10,7 @@ import io.netty.handler.codec.string.StringEncoder;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * @author Shaowei Zhang on 2018/11/14 0:22
+ * @author Shaowei Zhang on 2018/11/14 20:02
  **/
 @Slf4j
 public class ClientInitializer extends ChannelInitializer<NioSocketChannel> {
@@ -20,6 +20,7 @@ public class ClientInitializer extends ChannelInitializer<NioSocketChannel> {
     private static final StringEncoder ENCODER = new StringEncoder();
 
     private static final ClientHandler CLIENT_HANDLER = new ClientHandler();
+
 
     @Override
     protected void initChannel(NioSocketChannel ch) throws Exception {
