@@ -31,7 +31,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<String> {
             response = "Have a good day. \r\n";
             close = true;
         } else {
-            response = "Server has received you message " + msg + "''. \r\n";
+            response = "Server has received you message '" + msg + "'. \r\n";
         }
         ChannelFuture channelFuture = ctx.writeAndFlush(response);
         if (close) {

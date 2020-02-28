@@ -1,14 +1,18 @@
 package com.zsw.demo.ch00;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author Shaowei Zhang on 2018/11/10 12:43
  **/
 @Slf4j
-public class TcpServerHandler extends ChannelInboundHandlerAdapter {
+@ChannelHandler.Sharable
+public class TcpServerHandler extends SimpleChannelInboundHandler<String> {
+
 
 
     @Override
@@ -17,7 +21,7 @@ public class TcpServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    public void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
         log.info("Server received message from a client : {}", msg);
         ctx.channel().writeAndFlush("Echo from server : " + msg);
         ctx.close();
