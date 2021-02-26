@@ -13,11 +13,13 @@ import java.util.Date;
 @ChannelHandler.Sharable
 public class ServerHandler extends SimpleChannelInboundHandler<String> {
 
+    public static final String LF = " \r\n";
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         log.info("A client has connected to server. {}", ctx.channel().remoteAddress());
-        ctx.write("Welcome to " + InetAddress.getLocalHost().getHostName() + ". \r\n");
-        ctx.write("It is " + new Date() + " now. \r\n");
+        ctx.write("Welcome to " + InetAddress.getLocalHost().getHostName() + "." + LF);
+        ctx.write("It is " + new Date() + " now." + LF);
         ctx.flush();
     }
 
@@ -26,13 +28,14 @@ public class ServerHandler extends SimpleChannelInboundHandler<String> {
         String response;
         boolean close = false;
         if (msg.isEmpty()) {
-            response = "Please type something. \r\n";
+            response = "Please type something.";
         } else if ("bye".equalsIgnoreCase(msg)) {
-            response = "Have a good day. \r\n";
+            response = "Have a good day.";
             close = true;
         } else {
-            response = "Server has received you message '" + msg + "'. \r\n";
+            response = "Server has received you message '" + msg + "'.";
         }
+        response += LF;
         ChannelFuture channelFuture = ctx.writeAndFlush(response);
         if (close) {
             log.info("A client logout. {}", channelFuture.channel().remoteAddress());

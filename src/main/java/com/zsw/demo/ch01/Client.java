@@ -17,6 +17,8 @@ import java.io.InputStreamReader;
 @Slf4j
 public class Client {
 
+    public static final String LF = "\r\n";
+
     public static void main(String[] args) {
         EventLoopGroup group = new NioEventLoopGroup();
         try {
@@ -36,8 +38,12 @@ public class Client {
                 if (line == null) {
                     break;
                 }
-                lastChannelFuture = channel.writeAndFlush(line + "\r\n");
+                if ("flush".equals(line)) {
+                    line = LF;
+                }
+                lastChannelFuture = channel.writeAndFlush(line);
                 if ("bye".equalsIgnoreCase(line)) {
+                    lastChannelFuture = channel.writeAndFlush(LF);
                     channel.closeFuture().sync();
                     break;
                 }
