@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class Server {
 
+
+
     public static void main(String[] args) {
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workGroup = new NioEventLoopGroup();
@@ -29,7 +31,7 @@ public class Server {
             log.info("Server started.");
             channelFuture.channel().closeFuture().sync();
         } catch (Exception e) {
-            log.error("Server error : {}", e);
+            log.error("Server error : {}",e.getMessage(),  e);
         } finally {
             bossGroup.shutdownGracefully();
             workGroup.shutdownGracefully();

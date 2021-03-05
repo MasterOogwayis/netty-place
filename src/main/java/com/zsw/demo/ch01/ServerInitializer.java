@@ -1,6 +1,7 @@
 package com.zsw.demo.ch01;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
@@ -20,7 +21,7 @@ public class ServerInitializer extends ChannelInitializer<Channel> {
 
     private static final StringEncoder ENCODER = new StringEncoder();
 
-    private static final ServerHandler SERVER_HANDLER = new ServerHandler();
+    private static final ChannelHandler SERVER_HANDLER = new ServerHandler();
 
 
     @Override
